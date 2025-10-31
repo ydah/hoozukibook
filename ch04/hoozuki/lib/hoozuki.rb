@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require_relative 'hoozuki/node'
+require_relative 'hoozuki/parser'
+
 class Hoozuki
   def initialize(pattern)
     @pattern = pattern
@@ -19,6 +22,10 @@ class Hoozuki
       match_literal(node, input, pos)
     when Node::Concatenation
       match_concatenation(node, input, pos)
+    when Node::Choice
+      match_choice(node, input, pos)
+    when Node::Epsilon
+      pos
     else
       false
     end
@@ -38,5 +45,14 @@ class Hoozuki
       pos = result
     end
     pos
+  end
+
+  def match_choice(node, input, pos)
+    node.children.each do |child|
+      result = match_node(child, input, pos)
+      return result if result
+    end
+
+    false
   end
 end
