@@ -2,57 +2,17 @@
 
 require_relative 'hoozuki/node'
 require_relative 'hoozuki/parser'
+require_relative 'hoozuki/automaton'
 
 class Hoozuki
   def initialize(pattern)
     @pattern = pattern
-    @ast = Parser.new(pattern).parse
+
+    ast = Parser.new(pattern).parse
+    @nfa = Automaton::NFA.new_from_node(ast, Automaton::StateID.new(0))
   end
 
   def match?(input)
-    result = match_node(@ast, input, 0)
-    result && result == input.length
-  end
-
-  private
-
-  def match_node(node, input, pos)
-    case node
-    when Node::Literal
-      match_literal(node, input, pos)
-    when Node::Concatenation
-      match_concatenation(node, input, pos)
-    when Node::Choice
-      match_choice(node, input, pos)
-    when Node::Epsilon
-      pos
-    else
-      false
-    end
-  end
-
-  def match_literal(node, input, pos)
-    return false if pos >= input.length
-    return false if input[pos] != node.value
-
-    pos + 1
-  end
-
-  def match_concatenation(node, input, pos)
-    node.children.each do |child|
-      result = match_node(child, input, pos)
-      return false unless result
-      pos = result
-    end
-    pos
-  end
-
-  def match_choice(node, input, pos)
-    node.children.each do |child|
-      result = match_node(child, input, pos)
-      return result if result
-    end
-
-    false
+    @nfa.match?(input)
   end
 end
