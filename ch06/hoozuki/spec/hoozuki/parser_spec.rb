@@ -71,5 +71,68 @@ RSpec.describe Hoozuki::Parser do
       expect(ast).to be_a(Hoozuki::Node::Choice)
       expect(ast.children.length).to eq(3)
     end
+
+    context 'with grouping' do
+      it 'parses simple grouped pattern' do
+        ast = Hoozuki::Parser.new('a(b|c)d').parse
+
+        expect(ast).to be_a(Hoozuki::Node::Concatenation)
+        expect(ast.children.length).to eq(3)
+        expect(ast.children[0]).to be_a(Hoozuki::Node::Literal)
+        expect(ast.children[0].value).to eq('a')
+
+        choice = ast.children[1]
+        expect(choice).to be_a(Hoozuki::Node::Choice)
+        expect(choice.children.length).to eq(2)
+        expect(choice.children[0].value).to eq('b')
+        expect(choice.children[1].value).to eq('c')
+        expect(ast.children[2]).to be_a(Hoozuki::Node::Literal)
+        expect(ast.children[2].value).to eq('d')
+      end
+
+      it 'parses nested groups' do
+        ast = Hoozuki::Parser.new('a((b|c)|d)e').parse
+
+        expect(ast).to be_a(Hoozuki::Node::Concatenation)
+        expect(ast.children.length).to eq(3)
+
+        outer_choice = ast.children[1]
+        expect(outer_choice).to be_a(Hoozuki::Node::Choice)
+        expect(outer_choice.children.length).to eq(2)
+
+        inner_choice = outer_choice.children[0]
+        expect(inner_choice).to be_a(Hoozuki::Node::Choice)
+      end
+
+      it 'parses group with empty alternative' do
+        ast = Hoozuki::Parser.new('ab(cd|)ef').parse
+        expect(ast).to be_a(Hoozuki::Node::Concatenation)
+
+        choice = ast.children[2]
+        expect(choice).to be_a(Hoozuki::Node::Choice)
+        expect(choice.children.length).to eq(2)
+        expect(choice.children[1]).to be_a(Hoozuki::Node::Epsilon)
+      end
+    end
+
+    context 'with error cases' do
+      it 'raises error for unmatched opening parenthesis' do
+        expect {
+          Hoozuki::Parser.new('a(b').parse
+        }.to raise_error(/Expected closing parenthesis/)
+      end
+
+      it 'raises error for unmatched closing parenthesis' do
+        expect {
+          Hoozuki::Parser.new('a)b').parse
+        }.to raise_error(/Unexpected character/)
+      end
+
+      it 'raises error for nested unmatched parentheses' do
+        expect {
+          Hoozuki::Parser.new('a((b|c)').parse
+        }.to raise_error(/Expected closing parenthesis/)
+      end
+    end
   end
 end

@@ -10,7 +10,7 @@ class Hoozuki
     def parse
       ast = parse_choice
 
-      raise 'Unexpected end of pattern' unless eol?
+      raise "Unexpected character '#{current}' at position #{@offset}" unless eol?
 
       ast
     end
@@ -27,6 +27,7 @@ class Hoozuki
       end
 
       return children.first if children.length == 1
+      return Node::Epsilon.new if children.empty?
       Node::Choice.new(children)
     end
 
@@ -34,7 +35,7 @@ class Hoozuki
       children = []
 
       until stop_parsing_concatenation?
-        children << parse_literal
+        children << parse_group
       end
 
       return children.first if children.length == 1
@@ -42,13 +43,30 @@ class Hoozuki
       Node::Concatenation.new(children)
     end
 
+    def parse_group
+      return parse_literal if current != '('
+
+      paren_pos = @offset
+      next_char
+
+      child = parse_choice
+
+      if current != ')'
+        raise "Expected closing parenthesis for '(' at position " \
+              "#{paren_pos}. Got: #{current || 'end of pattern'}"
+      end
+
+      next_char
+      child
+    end
+
     def parse_literal
       raise 'Unexpected end of pattern' if eol?
 
       char = current
       case char
-      when '|'
-        raise "Unexpected character: #{char}"
+      when '(', ')', '|', '*', '+', '?'
+        raise "Unexpected character '#{char}' at position #{@offset}"
       else
         next_char
         Node::Literal.new(char)
@@ -56,7 +74,7 @@ class Hoozuki
     end
 
     def stop_parsing_concatenation?
-      eol? || current == '|'
+      eol? || current == '|' || current == ')'
     end
 
     def current
