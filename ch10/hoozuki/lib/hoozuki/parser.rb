@@ -83,6 +83,10 @@ class Hoozuki
       raise 'Unexpected end of pattern' if eol?
 
       char = current
+      if char == '\\'
+        return parse_escape
+      end
+
       case char
       when '(', ')', '|', '*', '+', '?'
         raise "Unexpected character '#{char}' at position #{@offset}"
@@ -90,6 +94,19 @@ class Hoozuki
         next_char
         Node::Literal.new(char)
       end
+    end
+
+    def parse_escape
+      escape_pos = @offset
+      next_char
+
+      if eol?
+        raise "Incomplete escape sequence at position #{escape_pos}"
+      end
+
+      escaped_char = current
+      next_char
+      Node::Literal.new(escaped_char)
     end
 
     def stop_parsing_concatenation?

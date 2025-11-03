@@ -268,5 +268,43 @@ RSpec.describe Hoozuki do
         end
       end
     end
+
+    context 'with escape sequences' do
+      it 'matches escaped asterisk' do
+        regex = Hoozuki.new('a\*b')
+
+        expect(regex.match?('a*b')).to be true
+        expect(regex.match?('ab')).to be false
+        expect(regex.match?('aab')).to be false
+      end
+
+      it 'matches escaped parentheses' do
+        regex = Hoozuki.new('\(hello\)')
+
+        expect(regex.match?('(hello)')).to be true
+        expect(regex.match?('hello')).to be false
+      end
+
+      it 'matches escaped pipe' do
+        regex = Hoozuki.new('a\|b')
+
+        expect(regex.match?('a|b')).to be true
+        expect(regex.match?('a')).to be false
+        expect(regex.match?('b')).to be false
+      end
+
+      it 'matches escaped backslash' do
+        regex = Hoozuki.new('a\\\\b')
+
+        expect(regex.match?('a\\b')).to be true
+      end
+
+      it 'matches complex escaped pattern' do
+        regex = Hoozuki.new('\(a\|b\)\*')
+
+        expect(regex.match?('(a|b)*')).to be true
+        expect(regex.match?('ab')).to be false
+      end
+    end
   end
 end

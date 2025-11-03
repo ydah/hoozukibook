@@ -163,5 +163,55 @@ RSpec.describe Hoozuki::Parser do
         expect(repetition).to be_a(Hoozuki::Node::Repetition)
       end
     end
+
+    context 'with escape sequences' do
+      it 'parses escaped asterisk' do
+        ast = Hoozuki::Parser.new('a\*b').parse
+
+        expect(ast).to be_a(Hoozuki::Node::Concatenation)
+        expect(ast.children.length).to eq(3)
+
+        expect(ast.children[0].value).to eq('a')
+        expect(ast.children[1].value).to eq('*')
+        expect(ast.children[2].value).to eq('b')
+      end
+
+      it 'parses escaped parentheses' do
+        ast = Hoozuki::Parser.new('\(a\)').parse
+
+        expect(ast).to be_a(Hoozuki::Node::Concatenation)
+        expect(ast.children[0].value).to eq('(')
+        expect(ast.children[1].value).to eq('a')
+        expect(ast.children[2].value).to eq(')')
+      end
+
+      it 'parses escaped pipe' do
+        ast = Hoozuki::Parser.new('a\|b').parse
+
+        expect(ast).to be_a(Hoozuki::Node::Concatenation)
+        expect(ast.children[1].value).to eq('|')
+      end
+
+      it 'parses escaped backslash' do
+        ast = Hoozuki::Parser.new('a\\\\b').parse
+
+        expect(ast).to be_a(Hoozuki::Node::Concatenation)
+        expect(ast.children[1].value).to eq('\\')
+      end
+
+      it 'parses escaped non-metachar' do
+        ast = Hoozuki::Parser.new('\a\b').parse
+
+        expect(ast).to be_a(Hoozuki::Node::Concatenation)
+        expect(ast.children[0].value).to eq('a')
+        expect(ast.children[1].value).to eq('b')
+      end
+
+      it 'raises error for incomplete escape' do
+        expect {
+          Hoozuki::Parser.new('a\\').parse
+        }.to raise_error(/Incomplete escape sequence/)
+      end
+    end
   end
 end
