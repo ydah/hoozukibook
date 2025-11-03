@@ -77,8 +77,10 @@ class Hoozuki
         when Node::Repetition
           if node.zero_or_more?
             build_zero_or_more(node.child, state)
-          # elsif node.one_or_more?
-          # elsif node.optional?
+          elsif node.one_or_more?
+            build_one_or_more(node.child, state)
+          elsif node.optional?
+            build_optional(node.child, state)
           end
         else
           raise ArgumentError, "Unsupported node type: #{node.class}"
@@ -152,6 +154,40 @@ class Hoozuki
 
         nfa
       end
+
+      def self.build_one_or_more(child_node, state)
+        child_nfa = new_from_node(child_node, state)
+
+        start_state = state.new_state
+        accept_state = state.new_state
+
+        nfa = new(start_state, [accept_state])
+        nfa.transitions.merge(child_nfa.transitions)
+        nfa.add_epsilon_transition(start_state, child_nfa.start)
+
+        child_nfa.accept.each do |child_accept|
+          nfa.add_epsilon_transition(child_accept, accept_state)
+          nfa.add_epsilon_transition(child_accept, child_nfa.start)
+        end
+
+        nfa
+      end
+
+      def self.build_optional(child_node, state)
+        child_nfa = new_from_node(child_node, state)
+        start_state = state.new_state
+
+        accepts = child_nfa.accept.dup
+        accepts << start_state
+
+        nfa = new(start_state, accepts)
+        nfa.transitions.merge(child_nfa.transitions)
+
+        nfa.add_epsilon_transition(start_state, child_nfa.start)
+
+        nfa
+      end
+
     end
   end
 end

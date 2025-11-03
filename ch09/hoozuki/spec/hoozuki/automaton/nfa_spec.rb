@@ -73,6 +73,35 @@ RSpec.describe Hoozuki::Automaton::NFA do
       epsilon_transitions = nfa.transitions.select { |_, label, _| label.nil? }
       expect(epsilon_transitions.size).to be >= 4  # 最低4つのε遷移
     end
+
+    it 'builds NFA from one-or-more Repetition node' do
+      node = Hoozuki::Node::Repetition.new(
+        Hoozuki::Node::Literal.new('a'),
+        :one_or_more
+      )
+      state = Hoozuki::Automaton::StateID.new(0)
+
+      nfa = described_class.new_from_node(node, state)
+
+      expect(nfa.start).to be_a(Hoozuki::Automaton::StateID)
+      expect(nfa.accept.length).to eq(1)
+      epsilon_transitions = nfa.transitions.select { |_, label, _| label.nil? }
+      expect(epsilon_transitions.size).to be >= 3
+    end
+
+    it 'builds NFA from optional Repetition node' do
+      node = Hoozuki::Node::Repetition.new(
+        Hoozuki::Node::Literal.new('a'),
+        :optional
+      )
+      state = Hoozuki::Automaton::StateID.new(0)
+
+      nfa = described_class.new_from_node(node, state)
+
+      expect(nfa.start).to be_a(Hoozuki::Automaton::StateID)
+      expect(nfa.accept.length).to be >= 1
+      expect(nfa.accept).to include(nfa.start)
+    end
   end
 
   describe '#epsilon_closure' do
@@ -141,6 +170,34 @@ RSpec.describe Hoozuki::Automaton::NFA do
       expect(nfa.match?('')).to be true
       expect(nfa.match?('a')).to be true
       expect(nfa.match?('aaa')).to be true
+      expect(nfa.match?('b')).to be false
+    end
+
+    it 'matches one-or-more pattern' do
+      node = Hoozuki::Node::Repetition.new(
+        Hoozuki::Node::Literal.new('a'),
+        :one_or_more
+      )
+      state = Hoozuki::Automaton::StateID.new(0)
+      nfa = described_class.new_from_node(node, state)
+
+      expect(nfa.match?('')).to be false
+      expect(nfa.match?('a')).to be true
+      expect(nfa.match?('aaa')).to be true
+      expect(nfa.match?('b')).to be false
+    end
+
+    it 'matches optional pattern' do
+      node = Hoozuki::Node::Repetition.new(
+        Hoozuki::Node::Literal.new('a'),
+        :optional
+      )
+      state = Hoozuki::Automaton::StateID.new(0)
+      nfa = described_class.new_from_node(node, state)
+
+      expect(nfa.match?('')).to be true
+      expect(nfa.match?('a')).to be true
+      expect(nfa.match?('aa')).to be false
       expect(nfa.match?('b')).to be false
     end
   end

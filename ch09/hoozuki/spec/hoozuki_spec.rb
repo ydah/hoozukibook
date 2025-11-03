@@ -186,6 +186,87 @@ RSpec.describe Hoozuki do
           expect(regex.match?('abcde')).to be false
         end
       end
+
+      context 'with one-or-more repetition' do
+        context 'with pattern a+' do
+          let(:regex) { Hoozuki.new('a+') }
+
+          it 'does not match empty string' do
+            expect(regex.match?('')).to be false
+          end
+
+          it 'matches single character' do
+            expect(regex.match?('a')).to be true
+          end
+
+          it 'matches multiple characters' do
+            expect(regex.match?('aaaa')).to be true
+          end
+        end
+
+        context 'with pattern (ab)+' do
+          let(:regex) { Hoozuki.new('(ab)+') }
+
+          it 'does not match empty string' do
+            expect(regex.match?('')).to be false
+          end
+
+          it 'matches single repetition' do
+            expect(regex.match?('ab')).to be true
+          end
+
+          it 'matches multiple repetitions' do
+            expect(regex.match?('ababab')).to be true
+          end
+        end
+      end
+
+      context 'with optional repetition' do
+        context 'with pattern a?' do
+          let(:regex) { Hoozuki.new('a?') }
+
+          it 'matches empty string' do
+            expect(regex.match?('')).to be true
+          end
+
+          it 'matches single character' do
+            expect(regex.match?('a')).to be true
+          end
+
+          it 'does not match multiple characters' do
+            expect(regex.match?('aa')).to be false
+          end
+        end
+
+        context 'with pattern ab?c' do
+          let(:regex) { Hoozuki.new('ab?c') }
+
+          it 'matches without optional part' do
+            expect(regex.match?('ac')).to be true
+          end
+
+          it 'matches with optional part' do
+            expect(regex.match?('abc')).to be true
+          end
+
+          it 'does not match with repeated optional part' do
+            expect(regex.match?('abbc')).to be false
+          end
+        end
+      end
+
+      context 'with combined quantifiers' do
+        let(:regex) { Hoozuki.new('a+b*c?') }
+
+        it 'matches various combinations' do
+          expect(regex.match?('a')).to be true
+          expect(regex.match?('ab')).to be true
+          expect(regex.match?('abc')).to be true
+          expect(regex.match?('aabc')).to be true
+          expect(regex.match?('aabbc')).to be true
+          expect(regex.match?('aaabbbcc')).to be false  # cが2つ
+        end
+      end
     end
   end
 end
