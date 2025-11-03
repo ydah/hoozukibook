@@ -74,6 +74,12 @@ class Hoozuki
           build_concatenation(node, state)
         when Node::Choice
           build_choice(node, state)
+        when Node::Repetition
+          if node.zero_or_more?
+            build_zero_or_more(node.child, state)
+          # elsif node.one_or_more?
+          # elsif node.optional?
+          end
         else
           raise ArgumentError, "Unsupported node type: #{node.class}"
         end
@@ -122,6 +128,26 @@ class Hoozuki
         nfas.each do |child_nfa|
           nfa.transitions.merge(child_nfa.transitions)
           nfa.add_epsilon_transition(start_state, child_nfa.start)
+        end
+
+        nfa
+      end
+
+      def self.build_zero_or_more(child_node, state)
+        child_nfa = new_from_node(child_node, state)
+
+        start_state = state.new_state
+        accept_state = state.new_state
+
+        nfa = new(start_state, [accept_state])
+        nfa.transitions.merge(child_nfa.transitions)
+
+        nfa.add_epsilon_transition(start_state, child_nfa.start)
+        nfa.add_epsilon_transition(start_state, accept_state)
+
+        child_nfa.accept.each do |child_accept|
+          nfa.add_epsilon_transition(child_accept, accept_state)
+          nfa.add_epsilon_transition(child_accept, child_nfa.start)
         end
 
         nfa

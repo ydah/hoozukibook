@@ -35,12 +35,31 @@ class Hoozuki
       children = []
 
       until stop_parsing_concatenation?
-        children << parse_group
+        children << parse_repetition
       end
 
       return children.first if children.length == 1
       return Node::Epsilon.new if children.empty?
       Node::Concatenation.new(children)
+    end
+
+    def parse_repetition
+      child = parse_group
+
+      quantifier = nil
+      case current
+      when '*'
+        quantifier = :zero_or_more
+      when '+'
+        quantifier = :one_or_more
+      when '?'
+        quantifier = :optional
+      end
+
+      return child if quantifier.nil?
+
+      next_char
+      Node::Repetition.new(child, quantifier)
     end
 
     def parse_group

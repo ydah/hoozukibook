@@ -134,5 +134,34 @@ RSpec.describe Hoozuki::Parser do
         }.to raise_error(/Expected closing parenthesis/)
       end
     end
+
+    context 'with repetition' do
+      it 'parses zero-or-more pattern' do
+        ast = Hoozuki::Parser.new('a*').parse
+
+        expect(ast).to be_a(Hoozuki::Node::Repetition)
+        expect(ast.zero_or_more?).to be true
+        expect(ast.child).to be_a(Hoozuki::Node::Literal)
+        expect(ast.child.value).to eq('a')
+      end
+
+      it 'parses group repetition' do
+        ast = Hoozuki::Parser.new('(ab)*').parse
+
+        expect(ast).to be_a(Hoozuki::Node::Repetition)
+        expect(ast.child).to be_a(Hoozuki::Node::Concatenation)
+        expect(ast.child.children.length).to eq(2)
+      end
+
+      it 'parses complex pattern with repetition' do
+        ast = Hoozuki::Parser.new('a(bc)*d').parse
+
+        expect(ast).to be_a(Hoozuki::Node::Concatenation)
+        expect(ast.children.length).to eq(3)
+
+        repetition = ast.children[1]
+        expect(repetition).to be_a(Hoozuki::Node::Repetition)
+      end
+    end
   end
 end

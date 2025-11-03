@@ -58,6 +58,21 @@ RSpec.describe Hoozuki::Automaton::NFA do
       epsilon_transitions = nfa.transitions.select { |_, label, _| label.nil? }
       expect(epsilon_transitions.size).to eq(2)
     end
+
+    it 'builds NFA from Repetition node' do
+      node = Hoozuki::Node::Repetition.new(
+        Hoozuki::Node::Literal.new('a'),
+        :zero_or_more
+      )
+      state = Hoozuki::Automaton::StateID.new(0)
+      nfa = described_class.new_from_node(node, state)
+
+      expect(nfa.start).to be_a(Hoozuki::Automaton::StateID)
+      expect(nfa.accept.length).to eq(1)
+
+      epsilon_transitions = nfa.transitions.select { |_, label, _| label.nil? }
+      expect(epsilon_transitions.size).to be >= 4  # 最低4つのε遷移
+    end
   end
 
   describe '#epsilon_closure' do
@@ -113,6 +128,20 @@ RSpec.describe Hoozuki::Automaton::NFA do
       expect(nfa.match?('b')).to be true
       expect(nfa.match?('c')).to be false
       expect(nfa.match?('ab')).to be false
+    end
+
+    it 'matches repetition pattern' do
+      node = Hoozuki::Node::Repetition.new(
+        Hoozuki::Node::Literal.new('a'),
+        :zero_or_more
+      )
+      state = Hoozuki::Automaton::StateID.new(0)
+      nfa = described_class.new_from_node(node, state)
+
+      expect(nfa.match?('')).to be true
+      expect(nfa.match?('a')).to be true
+      expect(nfa.match?('aaa')).to be true
+      expect(nfa.match?('b')).to be false
     end
   end
 end
