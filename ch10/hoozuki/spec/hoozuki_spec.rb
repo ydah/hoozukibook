@@ -264,7 +264,7 @@ RSpec.describe Hoozuki do
           expect(regex.match?('abc')).to be true
           expect(regex.match?('aabc')).to be true
           expect(regex.match?('aabbc')).to be true
-          expect(regex.match?('aaabbbcc')).to be false  # cが2つ
+          expect(regex.match?('aaabbbcc')).to be false
         end
       end
     end

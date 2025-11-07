@@ -71,7 +71,7 @@ RSpec.describe Hoozuki::Automaton::NFA do
       expect(nfa.accept.length).to eq(1)
 
       epsilon_transitions = nfa.transitions.select { |_, label, _| label.nil? }
-      expect(epsilon_transitions.size).to be >= 4  # 最低4つのε遷移
+      expect(epsilon_transitions.size).to be >= 4
     end
 
     it 'builds NFA from one-or-more Repetition node' do

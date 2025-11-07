@@ -78,7 +78,6 @@ class Hoozuki
           from == current && label == input 
         }&.last
 
-        # キャッシュに保存
         @cache[[current, input]] = next_state if use_cache && next_state
 
         next_state
